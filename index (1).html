@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Closet AI">
+<meta name="color-scheme" content="light dark">
+<title>Closet AI</title>
+<link rel="apple-touch-icon" id="touchIcon">
+<style>
+:root{--bg:#f1f1ee;--surface:#fff;--ink:#15171a;--muted:#6b6f76;--line:#dcdcd7;--accent:#3347c4;--on-accent:#fff;--tab-h:58px}
+@media (prefers-color-scheme:dark){:root{--bg:#101113;--surface:#1b1c20;--ink:#f0f0ec;--muted:#9a9ea6;--line:#2c2e33;--accent:#93a5ff;--on-accent:#101113}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"SF Hebrew","Arial Hebrew",system-ui,sans-serif;display:flex;flex-direction:column;
+ padding-top:env(safe-area-inset-top,0px)}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 6px}
+h1{font-size:30px;line-height:1.1;margin:0;font-weight:800;letter-spacing:-.5px}
+.icon-btn{background:none;border:0;color:var(--ink);padding:10px;margin:-10px;font-size:22px;cursor:pointer}
+main{flex:1;overflow-y:auto;padding:8px 20px 24px}
+.sub{color:var(--muted);margin:0 0 20px}
+.empty{border:1.5px dashed var(--line);border-radius:18px;padding:36px 24px;text-align:center;margin-top:12px}
+.empty b{display:block;font-size:19px;margin-bottom:6px}
+.empty p{margin:0;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 22px}
+.chip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 18px;font:inherit;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
+nav{display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;height:var(--tab-h);background:none;border:0;color:var(--muted);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+nav button[aria-selected=true]{color:var(--accent);font-weight:700}
+nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+dialog{border:0;border-radius:20px;background:var(--surface);color:var(--ink);width:min(92vw,420px);padding:22px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h2{margin:0 0 14px;font-size:20px}
+label{display:block;font-weight:600;margin:14px 0 6px}
+input{width:100%;font:inherit;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);direction:ltr;text-align:left}
+.row{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.status{min-height:1.5em;margin:10px 0 0;font-size:14px;color:var(--muted)}
+.status.err{color:#d13b3b}.status.ok{color:#2e9d5b}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.filters{display:flex;gap:8px;overflow-x:auto;margin:0 -20px 10px;padding:2px 20px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip.sm{padding:6px 14px;white-space:nowrap;font-size:14px;display:inline-flex;align-items:center;gap:6px;flex:none}
+.dot{width:12px;height:12px;border-radius:50%;border:1px solid var(--line);display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.cell{position:relative;aspect-ratio:1;border:0;border-radius:14px;background:var(--surface);padding:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font:inherit;font-size:13px}
+.cell img{max-width:100%;max-height:100%;object-fit:contain}
+.flag{position:absolute;top:6px;inset-inline-start:6px;background:var(--accent);color:var(--on-accent);font-size:11px;padding:2px 8px;border-radius:999px}
+.fab{position:fixed;inset-inline-end:20px;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 16px);width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--on-accent);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.fab[hidden]{display:none}
+.big{width:100%;max-height:260px;object-fit:contain;background:var(--bg);border-radius:14px}
+select{width:100%;font:inherit;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);margin-top:6px}
+label select{font-weight:400}
+</style>
+</head>
+<body>
+<header><h1 id="title"></h1><button class="icon-btn" id="gear" aria-label="הגדרות">⚙︎</button></header>
+<main id="view"></main>
+<nav role="tablist">
+ <button role="tab" data-tab="closet"><svg viewBox="0 0 24 24"><path d="M12 7V5.5a2 2 0 1 1 2 2M12 7 3 14.5a1 1 0 0 0 .6 1.8h16.8a1 1 0 0 0 .6-1.8L12 7z"/></svg>ארון</button>
+ <button role="tab" data-tab="today"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 16l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg>סט להיום</button>
+</nav>
+
+<dialog id="settings">
+ <h2>הגדרות</h2>
+ <label for="key">מפתח Claude API</label>
+ <input id="key" type="password" autocomplete="off" placeholder="sk-ant-...">
+ <label for="model">מודל</label>
+ <input id="model" autocomplete="off">
+ <p class="status" id="status"></p>
+ <div class="row"><button class="btn" id="test">בדיקת חיבור</button><button class="btn primary" id="save">שמירה</button></div>
+</dialog>
+
+<button class="fab" id="fab" aria-label="הוספת בגדים">+</button>
+<input type="file" id="pick" accept="image/*" multiple hidden>
+<dialog id="edit"><h2>עריכת פריט</h2><div id="editBody"></div>
+ <div class="row"><button class="btn" id="eDel">מחיקה</button><button class="btn primary" id="eSave">שמירה</button></div></dialog>
+
+<script>
+/* ========== Enums (שלב 1: מודל הנתונים) ========== */
+const CATEGORIES=[{id:'top',label:'חולצות'},{id:'bottom',label:'מכנסיים וחצאיות'},{id:'dress',label:'שמלות'},{id:'outerwear',label:'מעילים וג׳קטים'},{id:'shoes',label:'נעליים'},{id:'accessory',label:'אקססוריז'}];
+const COLORS=[['black','שחור','#000'],['white','לבן','#fff'],['gray','אפור','#888'],['beige','בז׳','#ddcdab'],['brown','חום','#7a5230'],['red','אדום','#d33'],['orange','כתום','#f08a24'],['yellow','צהוב','#f2cf3a'],['green','ירוק','#3a9a5b'],['blue','כחול','#2f5fd0'],['purple','סגול','#7a4bc4'],['pink','ורוד','#ee8fb0'],['multi','צבעוני','#6b5bd6']].map(([id,label,hex])=>({id,label,hex}));
+const SEASONS=[{id:'summer',label:'קיץ'},{id:'winter',label:'חורף'},{id:'transitional',label:'מעבר'},{id:'allYear',label:'כל השנה'}];
+// level מספרי: ה-Critic משווה פורמליות בקוד, בלי קריאה ל-AI
+const FORMALITIES=[{id:'casual',label:'יומיומי',level:0},{id:'smartCasual',label:'חצי רשמי',level:1},{id:'formal',label:'רשמי',level:2}];
+const OCCASIONS=[{id:'everyday',label:'יום יום',min:0,max:1},{id:'work',label:'עבודה',min:1,max:2},{id:'date',label:'דייט',min:1,max:2},{id:'festive',label:'חגיגי',min:1,max:2}];
+
+/* ========== Models ========== */
+const newItem=(imageId,o={})=>({id:crypto.randomUUID(),createdAt:Date.now(),imageId,category:'top',color:'black',season:'allYear',formality:'casual',manuallyEdited:false,lastWornAt:null,...o});
+// סט נשמר רק ב"לבשתי היום". itemIds ולא אובייקטים: מחיקת פריט לא שוברת היסטוריה.
+const newOutfit=(occasion,itemIds,explanation,temperatureC=null)=>({id:crypto.randomUUID(),createdAt:Date.now(),occasion,itemIds,explanation,temperatureC,wornOn:null});
+
+/* ========== DB: IndexedDB מקומי, בלי שרת ========== */
+const DB=(()=>{
+  let p;
+  const open=()=>p??=new Promise((res,rej)=>{
+    const r=indexedDB.open('closet-ai',1);
+    r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('items',{keyPath:'id'});d.createObjectStore('outfits',{keyPath:'id'});d.createObjectStore('images');};
+    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+  });
+  const run=async(store,mode,fn)=>{const d=await open();return new Promise((res,rej)=>{const t=d.transaction(store,mode);const rq=fn(t.objectStore(store));t.oncomplete=()=>res(rq?.result);t.onerror=()=>rej(t.error);});};
+  return{all:s=>run(s,'readonly',o=>o.getAll()),get:(s,k)=>run(s,'readonly',o=>o.get(k)),put:(s,v,k)=>run(s,'readwrite',o=>k===undefined?o.put(v):o.put(v,k)),del:(s,k)=>run(s,'readwrite',o=>o.delete(k))};
+})();
+
+/* תמונות כ-Blob במאגר נפרד (כמו ImageStore): הרשימות נשארות קלות */
+const ImageStore={
+  async save(blob){const id=crypto.randomUUID();await DB.put('images',blob,id);return id;},
+  load:id=>DB.get('images',id),
+  remove:id=>DB.del('images',id)
+};
+
+/* ========== Claude client (קריאה ישירה מהדפדפן) ========== */
+const Claude={
+  key:()=>localStorage.getItem('apiKey')||'',
+  model:()=>localStorage.getItem('model')||'claude-sonnet-5-5',
+  async send({system,content,maxTokens=1000}){
+    if(!this.key())throw new Error('חסר מפתח API. מוסיפים אותו בהגדרות.');
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':this.key(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:this.model(),max_tokens:maxTokens,system,messages:[{role:'user',content}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'שגיאה '+r.status);}
+    const d=await r.json();return d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+  }
+};
+
+/* ========== Agents: חוזים בלבד, המימוש בשלבים 2 ו-3 ========== */
+/* ---------- כלי תמונה ---------- */
+const loadImg=b=>new Promise((res,rej)=>{const u=URL.createObjectURL(b),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=rej;i.src=u;});
+async function shrink(blob,max,type='image/png',bg){const i=await loadImg(blob),k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);const x=c.getContext('2d');if(bg){x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);}x.drawImage(i,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,type,.85));}
+const b64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.split(',')[1]);f.readAsDataURL(b);});
+/* הסרת רקע בדפדפן (בפעם הראשונה מורידה מודל גדול) */
+let bgLib;const removeBg=async b=>{bgLib??=import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm').catch(e=>{bgLib=null;throw e});return (await bgLib).removeBackground(b);};
+
+/* ---------- Vision Agent: תמונה → סוג, צבע, עונה, פורמליות ---------- */
+const VisionAgent={async analyze(jpeg){
+  const ids=l=>l.map(x=>x.id).join('|');
+  const t=await Claude.send({system:'You identify the single clothing item in a photo. Reply with JSON only, no other text.',maxTokens:150,
+    content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:await b64(jpeg)}},
+      {type:'text',text:`Return {"category":"${ids(CATEGORIES)}","color":"${ids(COLORS)}","season":"${ids(SEASONS)}","formality":"${ids(FORMALITIES)}"} with exactly one value per key. color = dominant color.`}]});
+  const o=JSON.parse(t.match(/\{[\s\S]*\}/)[0]),ok=(l,v,d)=>l.some(x=>x.id===v)?v:d;
+  return{category:ok(CATEGORIES,o.category,'top'),color:ok(COLORS,o.color,'black'),season:ok(SEASONS,o.season,'allYear'),formality:ok(FORMALITIES,o.formality,'casual')};
+}};
+
+/* ---------- תור עיבוד: ממתין ← מעבד ← מוכן. נשמר ב-DB, ממשיך אחרי סגירה ---------- */
+let busy=false;
+async function enqueue(files){
+  if(!Claude.key())alert('אין מפתח API, אז הפריטים יסומנו "בדוק" בלי זיהוי. אפשר להוסיף מפתח בהגדרות.');
+  for(const f of files){const srcId=await ImageStore.save(await shrink(f,1200,'image/jpeg'));
+    await DB.put('items',newItem(null,{status:'pending',srcId,thumbId:null,needsReview:false}));}
+  render();runQueue();
+}
+async function runQueue(){
+  if(busy)return;busy=true;
+  try{for(;;){
+    const it=(await DB.all('items')).find(i=>i.status==='pending');if(!it)break;
+    it.status='processing';await DB.put('items',it);render();
+    const src=await ImageStore.load(it.srcId);let cut=src,review=false;
+    try{cut=await removeBg(src);}catch(e){review=true;}          // נכשל: נשמרת התמונה המקורית
+    it.imageId=await ImageStore.save(await shrink(cut,900));
+    it.thumbId=await ImageStore.save(await shrink(cut,300));
+    try{Object.assign(it,await VisionAgent.analyze(await shrink(cut,512,'image/jpeg','#fff')));}catch(e){review=true;}
+    await ImageStore.remove(it.srcId);
+    Object.assign(it,{srcId:null,status:'ready',needsReview:review});await DB.put('items',it);render();
+  }}finally{busy=false;}
+}
+const StylistAgent={propose:async(wardrobe,occasion,weather,feedback)=>{throw new Error('שלב 3')}}; // → {itemIds,explanation}
+const CriticAgent={review:(items,occasion,weather)=>{throw new Error('שלב 3')}};                    // → {approved,issues[]}
+
+/* ========== UI ========== */
+const $=s=>document.querySelector(s);
+const state={tab:'closet',occasion:'everyday',items:[],cat:'all',col:'all'};
+const TITLES={closet:'הארון שלי',today:'סט להיום'};
+
+async function render(){
+  state.items=await DB.all('items');
+  $('#title').textContent=TITLES[state.tab];$('#fab').hidden=state.tab!=='closet';
+  document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===state.tab));
+  const v=$('#view');
+  if(state.tab==='closet'){await renderCloset(v);}else{
+    v.innerHTML=`<p class="sub">לאיזה אירוע מתלבשים?</p>
+      <div class="chips">${OCCASIONS.map(o=>`<button class="chip" data-o="${o.id}" aria-pressed="${o.id===state.occasion}">${o.label}</button>`).join('')}</div>
+      <div class="empty"><b>עוד אין סט</b><p>יצירת סט לפי מזג האוויר מגיעה בשלב 3.</p></div>`;
+    v.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{state.occasion=c.dataset.o;render();});
+  }
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;render();});
+
+/* ---------- הארון ---------- */
+let urls=[];
+async function renderCloset(v){
+  urls.forEach(u=>URL.revokeObjectURL(u));urls=[];
+  const all=state.items,wait=all.filter(i=>i.status==='pending'||i.status==='processing').length;
+  const list=all.filter(i=>(state.cat==='all'||i.category===state.cat)&&(state.col==='all'||i.color===state.col)).sort((a,b)=>b.createdAt-a.createdAt);
+  const chip=(k,id,label,sw)=>`<button class="chip sm" data-k="${k}" data-id="${id}" aria-pressed="${state[k]===id}">${sw?`<i class="dot" style="background:${sw}"></i>`:''}${label}</button>`;
+  const cell=i=>`<button class="cell" data-id="${i.id}">${i.status==='ready'?`<img alt="" data-t="${i.thumbId}">`:`<span>${i.status==='processing'?'מעבד…':'ממתין'}</span>`}${i.needsReview?'<b class="flag">בדוק</b>':''}</button>`;
+  v.innerHTML=`<p class="sub">${all.length?all.length+' פריטים.':'אין עדיין פריטים.'}${wait?' מעבד עוד '+wait+'…':''}</p>
+    <div class="filters">${chip('cat','all','הכל')}${CATEGORIES.map(c=>chip('cat',c.id,c.label)).join('')}</div>
+    <div class="filters">${chip('col','all','כל הצבעים')}${COLORS.map(c=>chip('col',c.id,c.label,c.hex)).join('')}</div>`+
+    (list.length?`<div class="grid">${list.map(cell).join('')}</div>`
+     :`<div class="empty"><b>${all.length?'אין פריטים בסינון הזה':'הארון ריק'}</b><p>${all.length?'נסה סינון אחר.':'לוחצים על + ומצלמים או בוחרים תמונות מהגלריה.'}</p></div>`);
+  v.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{state[c.dataset.k]=c.dataset.id;render();});
+  v.querySelectorAll('.cell').forEach(c=>{const it=all.find(i=>i.id===c.dataset.id);if(it.status==='ready')c.onclick=()=>openEdit(it.id);});
+  v.querySelectorAll('img[data-t]').forEach(async im=>{const b=await ImageStore.load(im.dataset.t);if(b){const u=URL.createObjectURL(b);urls.push(u);im.src=u;}});
+}
+const ed=$('#edit');let cur;
+const opts=(l,v)=>l.map(x=>`<option value="${x.id}"${x.id===v?' selected':''}>${x.label}</option>`).join('');
+const FIELDS=[['category','סוג',CATEGORIES],['color','צבע',COLORS],['season','עונה',SEASONS],['formality','פורמליות',FORMALITIES]];
+async function openEdit(id){
+  cur=state.items.find(i=>i.id===id);const b=await ImageStore.load(cur.imageId);
+  $('#editBody').innerHTML=`<img class="big" alt="" src="${URL.createObjectURL(b)}">`+FIELDS.map(([k,t,l])=>`<label>${t}<select id="f_${k}">${opts(l,cur[k])}</select></label>`).join('');
+  ed.showModal();
+}
+$('#eSave').onclick=async()=>{FIELDS.forEach(([k])=>cur[k]=$('#f_'+k).value);cur.manuallyEdited=true;cur.needsReview=false;await DB.put('items',cur);ed.close();render();};
+$('#eDel').onclick=async()=>{if(!confirm('למחוק את הפריט?'))return;await ImageStore.remove(cur.imageId);await ImageStore.remove(cur.thumbId);await DB.del('items',cur.id);ed.close();render();};
+ed.addEventListener('click',e=>{if(e.target===ed)ed.close();});
+$('#fab').onclick=()=>$('#pick').click();
+$('#pick').onchange=e=>{enqueue([...e.target.files]);e.target.value='';};
+
+/* הגדרות */
+const dlg=$('#settings'),st=$('#status');
+const say=(t,c='')=>{st.textContent=t;st.className='status '+c;};
+$('#gear').onclick=()=>{$('#key').value=Claude.key();$('#model').value=Claude.model();say('');dlg.showModal();};
+const store=()=>{localStorage.setItem('apiKey',$('#key').value.trim());localStorage.setItem('model',$('#model').value.trim()||'claude-sonnet-5-5');};
+$('#save').onclick=()=>{store();dlg.close();};
+$('#test').onclick=async()=>{store();say('בודק…');try{await Claude.send({system:'ענה במילה אחת.',content:'אמור: תקין',maxTokens:20});say('החיבור תקין','ok');}catch(e){say(e.message,'err');}};
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close();});
+
+/* אייקון למסך הבית: מצויר ב-canvas כדי שהכל יישאר בקובץ אחד */
+(()=>{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');
+ x.fillStyle='#3347c4';x.fillRect(0,0,180,180);x.strokeStyle='#fff';x.lineWidth=10;x.lineCap=x.lineJoin='round';
+ x.beginPath();x.arc(90,52,13,Math.PI*.5,Math.PI*2);x.moveTo(90,79);x.lineTo(90,86);x.moveTo(90,86);x.lineTo(30,130);x.lineTo(150,130);x.closePath();x.stroke();
+ $('#touchIcon').href=c.toDataURL('image/png');})();
+
+navigator.storage?.persist?.();  // מבקש מ-iOS לא למחוק את הנתונים
+(async()=>{for(const i of await DB.all('items'))if(i.status==='processing'){i.status='pending';await DB.put('items',i);}await render();runQueue();})();
+</script>
+</body>
+</html>
