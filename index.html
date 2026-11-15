@@ -193,6 +193,53 @@ async function migrateStudio(){
   render();
 }
 
+/* ---------- ניקוי חיתוך: משאיר רק את הבגד הגדול, מחדד קצוות, ומזהה בגד שנחתך בפריים ---------- */
+function cleanAlpha(d,w,h){
+  const n=w*h,lab=new Int32Array(n),st=new Int32Array(n);let L=0,bestL=0,best=0;
+  for(let s=0;s<n;s++){if(lab[s]||d[s*4+3]<=40)continue;L++;let sp=0,cnt=0;st[sp++]=s;lab[s]=L;
+    while(sp){const p=st[--sp],x=p%w,y=(p-x)/w;cnt++;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const q=Y*w+X;if(!lab[q]&&d[q*4+3]>40){lab[q]=L;st[sp++]=q;}}}
+    if(cnt>best){best=cnt;bestL=L;}}
+  if(!bestL)return{cropped:false};
+  let edge=0,tot=0;const chk=p=>{tot++;if(lab[p]===bestL)edge++;};
+  for(let x=0;x<w;x++){chk(x);chk((h-1)*w+x);}for(let y=1;y<h-1;y++){chk(y*w);chk(y*w+w-1);}
+  const a=new Uint8Array(n),e=new Uint8Array(n);
+  for(let p=0;p<n;p++)a[p]=lab[p]===bestL?d[p*4+3]:0;
+  const at=(arr,x,y)=>arr[Math.min(h-1,Math.max(0,y))*w+Math.min(w-1,Math.max(0,x))];
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let m=255;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const v=at(a,x+dx,y+dy);if(v<m)m=v;}e[y*w+x]=m;}   // כיווץ של פיקסל: מוריד שאריות רקע בקצה
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let t=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)t+=at(e,x+dx,y+dy);d[(y*w+x)*4+3]=t/9;}   // ריכוך עדין
+  return{cropped:edge/tot>.01};
+}
+/* תאורה אחידה: מתאימים מישור לבהירות הבגד (תאורה שנופלת מצד אחד) ומיישרים אותו. צבע הבגד נשמר, כי כל הערוצים מוכפלים באותו יחס */
+function evenLight(d,w,h){
+  const S=[];for(let y=0;y<h;y+=3)for(let x=0;x<w;x+=3){const p=(y*w+x)*4;if(d[p+3]<200)continue;S.push(x/w-.5,y/h-.5,.299*d[p]+.587*d[p+1]+.114*d[p+2]);}
+  const m=S.length/3;if(m<400)return false;
+  const Ls=[];for(let i=2;i<S.length;i+=3)Ls.push(S[i]);Ls.sort((q,r)=>q-r);const med=Ls[m>>1];
+  let a=med,b=0,c=0,mean=med,use=i=>Math.abs(S[i*3+2]-med)<.35*med+4;
+  const det=A=>A[0]*(A[4]*A[8]-A[5]*A[7])-A[1]*(A[3]*A[8]-A[5]*A[6])+A[2]*(A[3]*A[7]-A[4]*A[6]);
+  for(let it=0;it<3;it++){   // מתאימים מישור רק לפיקסלים "רגילים", כך שהדפסים גדולים לא נחשבים תאורה
+    let n=0,sl=0,sx=0,sy=0,sxx=0,syy=0,sxy=0,sxl=0,syl=0;
+    for(let i=0;i<m;i++){if(!use(i))continue;const u=S[i*3],v=S[i*3+1],L=S[i*3+2];n++;sl+=L;sx+=u;sy+=v;sxx+=u*u;syy+=v*v;sxy+=u*v;sxl+=u*L;syl+=v*L;}
+    if(n<300)return false;
+    const M=[n,sx,sy,sx,sxx,sxy,sy,sxy,syy],D=det(M);if(Math.abs(D)<1e-9)return false;
+    const col=(k,r)=>{const A=M.slice();A[k]=r[0];A[k+3]=r[1];A[k+6]=r[2];return det(A)/D;},r=[sl,sxl,syl];
+    a=col(0,r);b=col(1,r);c=col(2,r);mean=sl/n;
+    use=i=>Math.abs(S[i*3+2]-(a+b*S[i*3]+c*S[i*3+1]))<.2*mean+4;
+  }
+  if(mean<8||Math.hypot(b,c)/mean<.06)return false;   // התאורה כבר אחידה
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const p=(y*w+x)*4;if(!d[p+3])continue;
+    const P=Math.max(mean*.4,a+b*(x/w-.5)+c*(y/h-.5)),g=Math.min(1.25,Math.max(.8,mean/P));
+    d[p]=Math.min(255,d[p]*g);d[p+1]=Math.min(255,d[p+1]*g);d[p+2]=Math.min(255,d[p+2]*g);}
+  return true;
+}
+async function viaPixels(blob,fn){
+  const i=await loadImg(blob),c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(i,0,0);
+  const im=x.getImageData(0,0,c.width,c.height),r=fn(im.data,c.width,c.height);x.putImageData(im,0,0);
+  return{blob:await new Promise(res=>c.toBlob(res,'image/png')),r};
+}
+const refine=async b=>{const o=await viaPixels(b,cleanAlpha);return{blob:o.blob,cropped:o.r.cropped};};
+const relight=async b=>(await viaPixels(b,evenLight)).blob;
+
 /* ---------- ישור: סיבוב לפי "איפה למעלה" (Claude) + יישור עדין לפי סימטריה ---------- */
 async function rotateBlob(blob,deg){
   const i=await loadImg(blob),r=deg*Math.PI/180,sn=Math.abs(Math.sin(r)),cs=Math.abs(Math.cos(r));
@@ -250,10 +297,10 @@ async function runQueue(){
     const it=(await DB.all('items')).find(i=>i.status==='pending');if(!it)break;
     it.status='processing';await DB.put('items',it);render();
     const src=await ImageStore.load(it.srcId);let cut=src,review=false;
-    let bgOk=true;try{cut=await removeBg(src);}catch(e){review=true;bgOk=false;}          // נכשל: נשמרת התמונה המקורית
+    let bgOk=true;try{cut=await removeBg(src);}catch(e){review=true;bgOk=false;}it.note='';if(bgOk){try{const r=await refine(cut);cut=r.blob;if(r.cropped){review=true;it.note='הבגד נחתך בקצה התמונה. מומלץ לצלם שוב כשהבגד כולו בפריים.';}}catch(e){}}          // נכשל: נשמרת התמונה המקורית
     let rot=0;
     try{const{rotate,...attrs}=await VisionAgent.analyze(await shrink(cut,512,'image/jpeg','#fff'));Object.assign(it,attrs);rot=rotate;}catch(e){review=true;}
-    let fin=cut;if(bgOk){try{fin=await straighten(cut,rot,it.category);}catch(e){fin=cut;}}
+    let fin=cut;if(bgOk){try{fin=await relight(await straighten(cut,rot,it.category));}catch(e){fin=cut;}}
     it.imageId=await ImageStore.save(bgOk?await studio(fin,800):await shrink(cut,900));it.box=bgOk?[...studio.lastBox]:null;
     it.thumbId=await ImageStore.save(bgOk?await studio(fin,300):await shrink(cut,300));it.studio=bgOk;
     await ImageStore.remove(it.srcId);
@@ -332,10 +379,10 @@ const opts=(l,v)=>l.map(x=>`<option value="${x.id}"${x.id===v?' selected':''}>${
 const FIELDS=[['category','סוג',CATEGORIES],['color','צבע',COLORS],['season','עונה',SEASONS],['formality','פורמליות',FORMALITIES]];
 async function openEdit(id){
   cur=state.items.find(i=>i.id===id);const b=await ImageStore.load(cur.imageId);
-  $('#editBody').innerHTML=`<img class="big" alt="" src="${URL.createObjectURL(b)}">`+FIELDS.map(([k,t,l])=>`<label>${t}<select id="f_${k}">${opts(l,cur[k])}</select></label>`).join('');
+  $('#editBody').innerHTML=`<img class="big" alt="" src="${URL.createObjectURL(b)}">${cur.note?`<p class="note">${esc(cur.note)}</p>`:''}`+FIELDS.map(([k,t,l])=>`<label>${t}<select id="f_${k}">${opts(l,cur[k])}</select></label>`).join('');
   ed.showModal();
 }
-$('#eSave').onclick=async()=>{FIELDS.forEach(([k])=>cur[k]=$('#f_'+k).value);cur.manuallyEdited=true;cur.needsReview=false;await DB.put('items',cur);if(state.outfit?.ids.includes(cur.id))state.status='idle';ed.close();render();};
+$('#eSave').onclick=async()=>{FIELDS.forEach(([k])=>cur[k]=$('#f_'+k).value);cur.manuallyEdited=true;cur.needsReview=false;cur.note='';await DB.put('items',cur);if(state.outfit?.ids.includes(cur.id))state.status='idle';ed.close();render();};
 $('#eDel').onclick=async()=>{if(!confirm('למחוק את הפריט?'))return;await ImageStore.remove(cur.imageId);await ImageStore.remove(cur.thumbId);if(state.outfit?.ids.includes(cur.id))state.status='idle';await DB.del('items',cur.id);ed.close();render();};
 ed.addEventListener('click',e=>{if(e.target===ed)ed.close();});
 $('#fab').onclick=()=>$('#pick').click();
