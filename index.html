@@ -273,14 +273,21 @@ async function straighten(blob,rot,cat){
   return b;
 }
 
+/* ---------- בדיקת איכות הצילום: מה לתקן כדי לקבל תמונה כמו בקטלוג ---------- */
+const ISSUE_TIPS={
+  not_flat:'הבגד לא פרוס (תלוי, מקופל או מונח בקפלים). הנח אותו שטוח על משטח אחיד, ישר, וצלם ישר מלמעלה.',
+  other_items:'נראים בתמונה בגדים או חפצים אחרים. צלם את הבגד לבדו על משטח ריק.',
+  blurry:'התמונה לא חדה. צלם שוב בלי תנועה.',
+  too_dark:'התמונה כהה מדי. צלם בתאורה טובה.'};
+
 /* ---------- Vision Agent: תמונה → סוג, צבע, עונה, פורמליות ---------- */
 const VisionAgent={async analyze(jpeg){
   const ids=l=>l.map(x=>x.id).join('|');
-  const t=await Claude.send({system:'You identify the single clothing item in a photo. Reply with JSON only, no other text.',maxTokens:150,
+  const t=await Claude.send({system:'You identify the single clothing item in a photo. Reply with JSON only, no other text.',maxTokens:200,
     content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:await b64(jpeg)}},
-      {type:'text',text:`Return {"category":"${ids(CATEGORIES)}","color":"${ids(COLORS)}","season":"${ids(SEASONS)}","formality":"${ids(FORMALITIES)}","rotate":"0|90|180|270"} with exactly one value per key. color = dominant color. rotate = the clockwise rotation in degrees needed so the garment is upright like a catalog photo (collar, neckline or waistband at the top); use 0 if it is already upright or you are unsure.`}]});
+      {type:'text',text:`Return {"category":"${ids(CATEGORIES)}","color":"${ids(COLORS)}","season":"${ids(SEASONS)}","formality":"${ids(FORMALITIES)}","rotate":"0|90|180|270","issues":["not_flat|other_items|blurry|too_dark"]} with exactly one value per key. color = dominant color. rotate = the clockwise rotation in degrees needed so the garment is upright like a catalog photo (collar, neckline or waistband at the top); use 0 if it is already upright or you are unsure. issues = the problems that stop this from being a clean catalog photo: not_flat (the garment is hanging, worn, draped or folded instead of laid out flat and spread), other_items (parts of other garments or objects are visible), blurry, too_dark; use an empty list if there are none.`}]});
   const o=JSON.parse(t.match(/\{[\s\S]*\}/)[0]),ok=(l,v,d)=>l.some(x=>x.id===v)?v:d;
-  return{category:ok(CATEGORIES,o.category,'top'),color:ok(COLORS,o.color,'black'),season:ok(SEASONS,o.season,'allYear'),formality:ok(FORMALITIES,o.formality,'casual'),rotate:[0,90,180,270].includes(+o.rotate)?+o.rotate:0};
+  return{category:ok(CATEGORIES,o.category,'top'),color:ok(COLORS,o.color,'black'),season:ok(SEASONS,o.season,'allYear'),formality:ok(FORMALITIES,o.formality,'casual'),rotate:[0,90,180,270].includes(+o.rotate)?+o.rotate:0,issues:Array.isArray(o.issues)?o.issues.filter(c=>c in ISSUE_TIPS):[]};
 }};
 
 /* ---------- תור עיבוד: ממתין ← מעבד ← מוכן. נשמר ב-DB, ממשיך אחרי סגירה ---------- */
@@ -299,7 +306,8 @@ async function runQueue(){
     const src=await ImageStore.load(it.srcId);let cut=src,review=false;
     let bgOk=true;try{cut=await removeBg(src);}catch(e){review=true;bgOk=false;}it.note='';if(bgOk){try{const r=await refine(cut);cut=r.blob;if(r.cropped){review=true;it.note='הבגד נחתך בקצה התמונה. מומלץ לצלם שוב כשהבגד כולו בפריים.';}}catch(e){}}          // נכשל: נשמרת התמונה המקורית
     let rot=0;
-    try{const{rotate,...attrs}=await VisionAgent.analyze(await shrink(cut,512,'image/jpeg','#fff'));Object.assign(it,attrs);rot=rotate;}catch(e){review=true;}
+    try{const{rotate,issues,...attrs}=await VisionAgent.analyze(await shrink(cut,512,'image/jpeg','#fff'));Object.assign(it,attrs);rot=rotate;
+      if(issues.length){review=true;it.note=[it.note,...issues.map(c=>ISSUE_TIPS[c])].filter(Boolean).join(' ');}}catch(e){review=true;}
     let fin=cut;if(bgOk){try{fin=await relight(await straighten(cut,rot,it.category));}catch(e){fin=cut;}}
     it.imageId=await ImageStore.save(bgOk?await studio(fin,800):await shrink(cut,900));it.box=bgOk?[...studio.lastBox]:null;
     it.thumbId=await ImageStore.save(bgOk?await studio(fin,300):await shrink(cut,300));it.studio=bgOk;
