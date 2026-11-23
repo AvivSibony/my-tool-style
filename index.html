@@ -80,6 +80,11 @@ if($('#rm').checked){const t=$('#tol').value**2,st=new Int32Array(n);let sp=0;
 const nr=i=>{const q=i*4,u=d[q]-bg[0],v=d[q+1]-bg[1],z=d[q+2]-bg[2];return u*u+v*v+z*z<t},add=i=>{if(!m[i]&&nr(i)){m[i]=1;st[sp++]=i}};
 for(let i=0;i<W;i++){add(i);add(n-W+i)}for(let j=0;j<H;j++){add(j*W);add(j*W+W-1)}
 while(sp){const i=st[--sp],cx=i%W;if(i>=W)add(i-W);if(i<n-W)add(i+W);if(cx>0)add(i-1);if(cx<W-1)add(i+1)}
+{const lb=new Int32Array(n),sz=[0];let id=0,mx=0;
+for(let s0=0;s0<n;s0++){if(m[s0]||lb[s0])continue;id++;let c=0,p=0;st[p++]=s0;lb[s0]=id;
+while(p){const i=st[--p],cx=i%W;c++;if(i>=W&&!m[i-W]&&!lb[i-W]){lb[i-W]=id;st[p++]=i-W}if(i<n-W&&!m[i+W]&&!lb[i+W]){lb[i+W]=id;st[p++]=i+W}if(cx>0&&!m[i-1]&&!lb[i-1]){lb[i-1]=id;st[p++]=i-1}if(cx<W-1&&!m[i+1]&&!lb[i+1]){lb[i+1]=id;st[p++]=i+1}}
+sz[id]=c;if(c>mx)mx=c}
+for(let i=0;i<n;i++)if(!m[i]&&sz[lb[i]]<mx*.02)m[i]=1}
 x0=W;y0=H;x1=0;y1=0;for(let i=0;i<n;i++){const q=i*4;if(m[i]){d[q+3]=0}else{const X=i%W,Y=(i/W)|0;
 if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;
 if(X>0&&m[i-1]||X<W-1&&m[i+1]||i>=W&&m[i-W]||i<n-W&&m[i+W])d[q+3]=150;else{r+=d[q];g+=d[q+1];b+=d[q+2];cnt++}}}
