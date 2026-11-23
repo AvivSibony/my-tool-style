@@ -24,12 +24,18 @@ nav button.alt,.btn.alt{background:none;color:var(--ink)}.btn.del{border-color:#
 .ov{position:fixed;inset:0;background:var(--bg);z-index:10;overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 40px}
 .ov[hidden]{display:none}#pv{width:100%;max-width:420px;display:block;margin:0 auto 14px;background:var(--panel)}
 label{display:block;margin:12px 0 4px;color:var(--mute);font-size:14px}.ctl{background:var(--panel);padding:10px 12px;border-radius:4px;margin-bottom:8px}
-input[type=range]{width:100%}.btns{display:flex;gap:8px;margin-top:16px;align-items:center}#pv.er{touch-action:none;cursor:crosshair}.mini{padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:none;font-size:13px}
+input[type=range]{width:100%}.btns{display:flex;gap:8px;margin-top:16px;align-items:center}#pv.er{touch-action:none;cursor:crosshair}.mini{padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:none;font-size:13px}[hidden]{display:none!important}
+#tabs{display:flex;padding:0 16px;gap:22px;border-bottom:1px solid var(--line)}#tabs button{background:none;border:0;padding:10px 2px;color:var(--mute);border-bottom:2px solid transparent;font-weight:600}#tabs button.on{color:var(--ink);border-color:var(--ink)}
+.lk{margin:14px 16px;background:var(--panel);padding:12px;border-radius:6px}.lk h3{margin:0 0 8px;font-size:17px}.it{display:flex;gap:4px}.it img{flex:1;min-width:0;width:0;aspect-ratio:4/5;object-fit:cover;background:#fff}
+.dots{display:flex;gap:6px;margin:10px 0 0;align-items:center;font-size:13px;color:var(--mute)}.dots i{width:16px;height:16px;border-radius:50%;border:1px solid var(--line);display:inline-block}
+.buy{border-top:1px solid var(--line);margin-top:10px;padding-top:10px;font-size:14px}.st{display:flex;justify-content:space-between;align-items:center;padding:6px 0}.st a{color:var(--ink);font-size:13px;border:1px solid var(--ink);border-radius:4px;padding:4px 10px;text-decoration:none}
 </style></head><body>
 <header><h1>הארון שלי</h1><span id="cnt"></span><span style="margin-inline-start:auto;display:flex;gap:6px"><button class="mini" id="bk">גיבוי</button><button class="mini" id="rs">שחזור</button></span></header>
+<div id="tabs"><button class="on" data-v="c">הארון</button><button data-v="l">לוקים</button></div>
 <div id="bar"><input id="q" type="search" placeholder="חיפוש לפי שם"><div id="chips"></div>
 <div class="row"><select id="fc"></select><select id="fs"></select></div></div>
 <main id="grid"></main><div id="empty" hidden>הארון ריק. צלמו או בחרו תמונה כדי להוסיף את הפריט הראשון.</div>
+<section id="looks" hidden><div style="padding:12px 16px 0;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--mute);font-size:14px">לוקים מהבגדים שלך, לפי הרמוניית צבעים</span><button class="mini" id="ln">לוק חדש ↻</button></div><div id="ll"></div></section>
 <nav><button id="b1">+ גלריה</button><button id="b2" class="alt">+ מצלמה</button></nav>
 <input type="file" id="f1" accept="image/*" hidden><input type="file" id="f2" accept="image/*" capture="environment" hidden><input type="file" id="f3" accept=".json,application/json" hidden>
 <section id="ov" class="ov" hidden>
@@ -55,7 +61,7 @@ async function load(){items=await tx('readonly',s=>s.getAll());items.sort((a,b)=
 function chips(){$('#chips').innerHTML=['הכל',...CATS].map(c=>`<button class="${(c=='הכל'?'':c)==cat?'on':''}">${c}</button>`).join('');
 $('#chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{cat=b.textContent=='הכל'?'':b.textContent;chips();draw()})}
 function draw(){const q=$('#q').value.trim(),c=$('#fc').value,s=$('#fs').value,l=items.filter(i=>(!cat||i.cat==cat)&&(!c||i.col==c)&&(!s||i.sea==s)&&(!q||i.name.includes(q)));
-$('#cnt').textContent=items.length+' פריטים';$('#empty').hidden=items.length>0;const g=$('#grid');g.innerHTML='';
+$('#cnt').textContent=items.length+' פריטים';$('#empty').hidden=items.length>0||view=='l';const g=$('#grid');g.innerHTML='';
 l.forEach(i=>{const u=urls[i.id]||(urls[i.id]=URL.createObjectURL(i.blob)),d=document.createElement('div');d.className='card';
 d.innerHTML=`<img src="${u}" alt="" loading="lazy" decoding="async"><div></div>`;const t=d.lastChild;t.textContent=i.name;const m=document.createElement('small');m.textContent=i.cat+' · '+i.col;t.append(m);d.onclick=()=>openItem(i);g.append(d)})}
 ['q','fc','fs'].forEach(k=>$('#'+k).oninput=draw);chips();
@@ -118,6 +124,30 @@ const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.n
 $('#rs').onclick=()=>$('#f3').click();
 $('#f3').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const j=JSON.parse(await f.text());if(!Array.isArray(j.items))throw 0;
 for(const i of j.items){i.blob=u2b(i.blob);i.orig=typeof i.orig=='string'?u2b(i.orig):undefined;await tx('readwrite',s=>s.put(i))}alert('שוחזרו '+j.items.length+' פריטים');load()}catch(x){alert('קובץ הגיבוי לא תקין')}};
+/*LK*/
+let view='c',seed=1;
+const FAM={שחור:'n',לבן:'n',אפור:'n','בז׳':'n',חום:'n',כחול:'b',תכלת:'b',אדום:'r',ורוד:'r',ירוק:'g',צהוב:'w',כתום:'w',סגול:'p'},MOD={'בז׳':'חול / קאמל',ירוק:'ירוק זית',כחול:'כחול נייבי',חום:'חום שוקולד',אפור:'אפור פחם',לבן:'שמנת / לבן שבור'};
+const PR={'חולצה קצרה':[['H&M',40,90],['גולף',60,110],['זארה',80,160]],'חולצה ארוכה':[['H&M',70,140],['קסטרו',100,200],['זארה',140,260]],'מכנסיים ארוכים':[['H&M',110,200],['גולף',130,230],['זארה',180,330]],'ג׳ינס':[['H&M',110,200],['פוקס',130,250],['זארה',180,330]],'מכנסיים קצרים':[['H&M',60,120],['גולף',70,130],['זארה',100,200]],'נעליים':[['פוקס',200,400],['קסטרו',200,400],['טרמינל X',300,700]],'ג׳קט':[['H&M',150,350],['קסטרו',200,450],['זארה',250,500]],'מעיל':[['H&M',200,450],['קסטרו',300,600],['זארה',350,700]],'סריג':[['H&M',100,180],['קסטרו',150,280],['זארה',180,330]],'סווטשירט':[['H&M',90,170],['גולף',100,180],['פוקס',120,220]],'בגדי ספורט':[['H&M',50,120],['פוקס',80,200],['טרמינל X',100,300]]};
+const LK=[{n:'יומיומי נקי',top:['חולצה קצרה','חולצה ארוכה'],bot:['ג׳ינס','מכנסיים ארוכים']},{n:'קיץ קליל',top:['חולצה קצרה'],bot:['מכנסיים קצרים'],sea:'קיץ'},{n:'חורפי חם',top:['סריג','סווטשירט'],bot:['ג׳ינס','מכנסיים ארוכים'],out:['ג׳קט','מעיל'],sea:'חורף'},{n:'קז׳ואל מחויט',top:['חולצה ארוכה','סריג'],bot:['מכנסיים ארוכים'],out:['ג׳קט']},{n:'ספורטיבי',top:['בגדי ספורט','סווטשירט'],bot:['מכנסיים קצרים','מכנסיים ארוכים']}];
+const pc=(a,b)=>{const x=FAM[a],y=FAM[b];if(a==b)return x=='n'?2:3;if(x=='n'&&y=='n')return(a=='שחור'&&b=='חום')||(a=='חום'&&b=='שחור')?0:3;if(x=='n'||y=='n'||x==y)return 3;return['bw','gr','pw'].includes([x,y].sort().join(''))?2:0};
+const sc=cs=>{let s=0;for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++)s+=pc(cs[i],cs[j]);return s-(new Set(cs.filter(c=>FAM[c]!='n')).size>2?5:0)};
+function looks(){const L=$('#ll');L.innerHTML='';
+if(items.length<2){L.innerHTML='<div id="empty" style="display:block;text-align:center;color:var(--mute);padding:50px 30px">הוסיפו לפחות חולצה ומכנסיים לארון כדי לקבל לוקים.</div>';return}
+let sd=seed*7919;const rnd=()=>(sd=(sd*9301+49297)%233280)/233280,shuf=a=>a.map(v=>[rnd(),v]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]).slice(0,8),u=i=>urls[i.id]||(urls[i.id]=URL.createObjectURL(i.blob));let made=0;
+LK.forEach(p=>{const f=cs=>items.filter(i=>cs.includes(i.cat)&&(!p.sea||i.sea=='כל השנה'||i.sea==p.sea)),T=shuf(f(p.top)),B=shuf(f(p.bot)),S=shuf(f(['נעליים'])),O=p.out?shuf(f(p.out)):[];
+const cand=[];
+for(const t of T.length?T:[null])for(const b of B.length?B:[null])for(const s of S.length?S:[null])for(const o of O.length?O:[null]){const sl=[t,b,s,o].filter(Boolean);cand.push([sc(sl.map(i=>i.col))+sl.length*2,[t,b,s,o]])}
+cand.sort((x,y)=>y[0]-x[0]);const top3=cand.filter(c=>c[0]>=cand[0][0]-3).slice(0,3),best=top3[Math.floor(rnd()*top3.length)][1];
+if(!best[0]||!best[1])return;const sel=best.filter(Boolean);made++;const cs=sel.map(i=>i.col),neu=cs.every(c=>FAM[c]=='n');
+let cat,why,pool=['לבן','שחור','בז׳','אפור'];
+if(!best[0]){cat=p.top[0];why='חסרה חולצה'}else if(!best[1]){cat=p.bot[0];why='חסרים מכנסיים'}else if(!best[2]){cat='נעליים';why='חסרות נעליים'}else if(p.out&&!best[3]){cat=p.out[0];why='שכבה עליונה תשדרג את הלוק'}else{cat=p.top[p.top.length-1];if(neu){pool=['כחול','ירוק','בז׳','חום'];why='פריט מבטא שיחדש את הלוק'}else why='פריט בסיס ניטרלי לאיזון'}
+const col=pool.map(c=>[sc([...cs,c]),c]).sort((a,b)=>b[0]-a[0])[0][1],nn=[...new Set(cs.filter(c=>FAM[c]!='n'))],pal=!nn.length?'ניטרלי נקי':nn.length==1?'ניטרלי + צבע מבטא':new Set(nn.map(c=>FAM[c])).size==1?'טונאלי':'משלים',cn=MOD[col]||col;
+const d=document.createElement('div');d.className='lk';
+d.innerHTML=`<h3>${p.n}</h3><div class="it">${[best[3],best[0],best[1],best[2]].filter(Boolean).map(i=>`<img src="${u(i)}" alt="">`).join('')}</div><div class="dots">${[...new Set(cs)].map(c=>`<i style="background:rgb(${COL[c]})"></i>`).join('')}<span>${pal}</span></div><div class="buy"><b>${why}:</b> ${cat} בצבע ${cn}${(PR[cat]||[]).map(([s,a,b])=>`<div class="st"><span>${s} · ₪${a}–${b}</span><a target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(cat+' '+cn+' '+s)}">חפש ↗</a></div>`).join('')}<small style="color:var(--mute)">טווחי מחיר משוערים. המחיר בפועל מופיע באתר החנות.</small></div>`;L.append(d)});
+if(!made)L.innerHTML='<div style="text-align:center;color:var(--mute);padding:50px 30px">אין עדיין מספיק פריטים שמתאימים ללוק. הוסיפו חולצה, מכנסיים ונעליים.</div>'}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x==b));const l=view=='l';$('#bar').hidden=l;$('#grid').hidden=l;$('#empty').hidden=l||items.length>0;$('#looks').hidden=!l;document.querySelector('nav').hidden=l;if(l)looks()});
+$('#ln').onclick=()=>{seed++;looks()};
+/*END*/
 navigator.storage&&navigator.storage.persist&&navigator.storage.persist();
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 load();
