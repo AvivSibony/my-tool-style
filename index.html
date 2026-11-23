@@ -1,0 +1,119 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="הארון שלי">
+<title>הארון שלי</title><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#fff;--panel:#f2f2f0;--ink:#111;--mute:#777;--line:#e2e2de;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121212;--panel:#1e1e1e;--ink:#f2f2f2;--mute:#999;--line:#2c2c2c}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,"Helvetica Neue",Arial,sans-serif;padding-bottom:84px}
+header{padding:18px 16px 4px;display:flex;align-items:baseline;gap:10px}h1{margin:0;font-size:28px;font-weight:600;letter-spacing:-.5px}#cnt{color:var(--mute);font-size:14px}
+#bar{padding:8px 16px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+input,select,button{font:inherit;color:inherit}
+input[type=search],input[type=text],select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+#chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0}#chips button{white-space:nowrap;padding:7px 14px;border:1px solid var(--line);border-radius:20px;background:none}
+#chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.row{display:flex;gap:8px}
+#grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:0 2px}
+.card{background:var(--panel);cursor:pointer}.card img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+.card div{padding:8px 10px 12px;font-size:14px}.card small{color:var(--mute);display:block}
+#empty{text-align:center;color:var(--mute);padding:60px 30px}
+nav{position:fixed;bottom:0;inset-inline:0;display:flex;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);z-index:6}
+nav button,.btn{flex:1;padding:13px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:4px;font-weight:600}
+nav button.alt,.btn.alt{background:none;color:var(--ink)}.btn.del{border-color:#c0392b;color:#c0392b;background:none}
+.ov{position:fixed;inset:0;background:var(--bg);z-index:10;overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 40px}
+.ov[hidden]{display:none}#pv{width:100%;max-width:420px;display:block;margin:0 auto 14px;background:var(--panel)}
+label{display:block;margin:12px 0 4px;color:var(--mute);font-size:14px}.ctl{background:var(--panel);padding:10px 12px;border-radius:4px;margin-bottom:8px}
+input[type=range]{width:100%}.btns{display:flex;gap:8px;margin-top:16px;align-items:center}#pv.er{touch-action:none;cursor:crosshair}.mini{padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:none;font-size:13px}
+</style></head><body>
+<header><h1>הארון שלי</h1><span id="cnt"></span><span style="margin-inline-start:auto;display:flex;gap:6px"><button class="mini" id="bk">גיבוי</button><button class="mini" id="rs">שחזור</button></span></header>
+<div id="bar"><input id="q" type="search" placeholder="חיפוש לפי שם"><div id="chips"></div>
+<div class="row"><select id="fc"></select><select id="fs"></select></div></div>
+<main id="grid"></main><div id="empty" hidden>הארון ריק. צלמו או בחרו תמונה כדי להוסיף את הפריט הראשון.</div>
+<nav><button id="b1">+ גלריה</button><button id="b2" class="alt">+ מצלמה</button></nav>
+<input type="file" id="f1" accept="image/*" hidden><input type="file" id="f2" accept="image/*" capture="environment" hidden><input type="file" id="f3" accept=".json,application/json" hidden>
+<section id="ov" class="ov" hidden>
+<canvas id="pv"></canvas><img id="pi" style="display:none;width:100%;max-width:420px;margin:0 auto 14px;background:var(--panel)">
+<div id="ed"><div class="ctl"><label style="margin:0"><input type="checkbox" id="rm" checked> הסרת רקע מקומית</label>
+<label>רגישות הסרה (גבוה = מסיר יותר)</label><input type="range" id="tol" min="10" max="140" value="55">
+<label>יישור (מעלות)</label><input type="range" id="rot" min="-45" max="45" value="0" step="0.5">
+<div class="btns"><button class="btn alt" id="r90">↻ 90°</button><button class="btn alt" id="rz">אפס יישור</button></div><label style="margin-top:14px"><input type="checkbox" id="er"> מחיקה ידנית: גררו באצבע על שאריות רקע</label><div class="btns" style="margin-top:6px"><input type="range" id="bs" min="6" max="60" value="22"><button class="btn alt" id="un">בטל</button></div></div></div>
+<label>שם הפריט</label><input type="text" id="nm"><label>קטגוריה</label><select id="ec"></select>
+<label>עונה</label><select id="es"></select><label>צבע עיקרי</label><select id="eo"></select>
+<div class="btns"><button class="btn" id="sv">שמירה</button><button class="btn alt" id="cx">ביטול</button><button class="btn alt" id="ri" hidden>ערוך תמונה</button><button class="btn del" id="dl" hidden>מחיקה</button></div>
+</section>
+<script>
+const $=s=>document.querySelector(s),CATS=['חולצה קצרה','חולצה ארוכה','מכנסיים ארוכים','מכנסיים קצרים','ג׳ינס','נעליים','ג׳קט','מעיל','סווטשירט','סריג','בגדי ספורט','אביזרים'],SEAS=['כל השנה','קיץ','חורף','מעבר'],
+COL={שחור:[20,20,20],לבן:[240,240,240],אפור:[128,128,128],כחול:[40,70,160],תכלת:[130,180,230],אדום:[200,40,40],ורוד:[240,150,180],ירוק:[50,130,70],צהוב:[235,200,50],כתום:[235,130,40],חום:[110,70,45],'בז׳':[210,190,150],סגול:[120,60,150]};
+const opts=(a,h)=>(h?`<option value="">${h}</option>`:'')+a.map(v=>`<option>${v}</option>`).join('');
+$('#fc').innerHTML=opts(Object.keys(COL),'כל הצבעים');$('#fs').innerHTML=opts(SEAS,'כל העונות');
+$('#ec').innerHTML=opts(CATS);$('#es').innerHTML=opts(SEAS);$('#eo').innerHTML=opts(Object.keys(COL));
+const db=new Promise((ok,no)=>{const r=indexedDB.open('closet',1);r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const tx=async(m,f)=>{const d=await db;return new Promise((ok,no)=>{const t=d.transaction('items',m),q=f(t.objectStore('items'));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)})};
+let items=[],cat='',urls={},cur=null,src=null,bg=[255,255,255],out=null,busy=0;
+async function load(){items=await tx('readonly',s=>s.getAll());items.sort((a,b)=>b.t-a.t);draw()}
+function chips(){$('#chips').innerHTML=['הכל',...CATS].map(c=>`<button class="${(c=='הכל'?'':c)==cat?'on':''}">${c}</button>`).join('');
+$('#chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{cat=b.textContent=='הכל'?'':b.textContent;chips();draw()})}
+function draw(){const q=$('#q').value.trim(),c=$('#fc').value,s=$('#fs').value,l=items.filter(i=>(!cat||i.cat==cat)&&(!c||i.col==c)&&(!s||i.sea==s)&&(!q||i.name.includes(q)));
+$('#cnt').textContent=items.length+' פריטים';$('#empty').hidden=items.length>0;const g=$('#grid');g.innerHTML='';
+l.forEach(i=>{const u=urls[i.id]||(urls[i.id]=URL.createObjectURL(i.blob)),d=document.createElement('div');d.className='card';
+d.innerHTML=`<img src="${u}" alt="" loading="lazy" decoding="async"><div></div>`;const t=d.lastChild;t.textContent=i.name;const m=document.createElement('small');m.textContent=i.cat+' · '+i.col;t.append(m);d.onclick=()=>openItem(i);g.append(d)})}
+['q','fc','fs'].forEach(k=>$('#'+k).oninput=draw);chips();
+$('#b1').onclick=()=>$('#f1').click();$('#b2').onclick=()=>$('#f2').click();
+$('#f1').onchange=$('#f2').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)pick(f)};
+function median(a){a.sort((x,y)=>x-y);return a[a.length>>1]}
+async function pick(f,item){const u=URL.createObjectURL(f),im=new Image();im.src=u;
+try{await im.decode()}catch(e){alert('לא ניתן לקרוא את התמונה. נסו JPG או PNG.');return}
+const k=Math.min(1,900/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
+const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);src=c;
+const R=[],G=[],B=[],w=c.width,h=c.height,p=(i,j)=>{const d=x.getImageData(i,j,1,1).data;R.push(d[0]);G.push(d[1]);B.push(d[2])};
+for(let i=0;i<w;i+=Math.max(1,w>>5)){p(i,0);p(i,h-1)}for(let j=0;j<h;j+=Math.max(1,h>>5)){p(0,j);p(w-1,j)}
+bg=[median(R),median(G),median(B)];cur=item||null;redo=!!item;rq=0;strokes=[];$('#er').checked=false;$('#pv').classList.remove('er');$('#rot').value=0;$('#tol').value=55;$('#rm').checked=true;
+if(item){$('#nm').value=item.name;$('#ec').value=item.cat;$('#es').value=item.sea;$('#eo').value=item.col}else{$('#nm').value='';$('#ec').selectedIndex=0;$('#es').selectedIndex=0}$('#ed').hidden=false;$('#pv').style.display='block';$('#pi').style.display='none';$('#dl').hidden=!item;$('#ri').hidden=true;
+$('#ov').hidden=false;render()}
+function render(){if(!src||busy)return;busy=1;requestAnimationFrame(()=>{busy=0;proc()})}
+function proc(){const a=+$('#rot').value*Math.PI/180+rq*Math.PI/2,w=src.width,h=src.height,s=Math.abs(Math.sin(a)),co=Math.abs(Math.cos(a)),
+W=Math.ceil(w*co+h*s),H=Math.ceil(w*s+h*co),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});
+x.fillStyle=`rgb(${bg})`;x.fillRect(0,0,W,H);x.translate(W/2,H/2);x.rotate(a);x.drawImage(src,-w/2,-h/2);
+const id=x.getImageData(0,0,W,H),d=id.data,n=W*H,m=new Uint8Array(n);let x0=0,y0=0,x1=W-1,y1=H-1,r=0,g=0,b=0,cnt=0;
+if($('#rm').checked){const t=$('#tol').value**2,st=new Int32Array(n);let sp=0;
+const nr=i=>{const q=i*4,u=d[q]-bg[0],v=d[q+1]-bg[1],z=d[q+2]-bg[2];return u*u+v*v+z*z<t},add=i=>{if(!m[i]&&nr(i)){m[i]=1;st[sp++]=i}};
+for(let i=0;i<W;i++){add(i);add(n-W+i)}for(let j=0;j<H;j++){add(j*W);add(j*W+W-1)}
+while(sp){const i=st[--sp],cx=i%W;if(i>=W)add(i-W);if(i<n-W)add(i+W);if(cx>0)add(i-1);if(cx<W-1)add(i+1)}
+x0=W;y0=H;x1=0;y1=0;for(let i=0;i<n;i++){const q=i*4;if(m[i]){d[q+3]=0}else{const X=i%W,Y=(i/W)|0;
+if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;
+if(X>0&&m[i-1]||X<W-1&&m[i+1]||i>=W&&m[i-W]||i<n-W&&m[i+W])d[q+3]=150;else{r+=d[q];g+=d[q+1];b+=d[q+2];cnt++}}}
+if(x1<=x0||y1<=y0||cnt<50){x0=0;y0=0;x1=W-1;y1=H-1;m.fill(0);}
+x.putImageData(id,0,0)}
+if(!cnt){for(let i=0;i<n;i+=7){r+=d[i*4];g+=d[i*4+1];b+=d[i*4+2];cnt++}}
+const cw=x1-x0+1,ch=y1-y0+1,o=$('#pv');o.width=800;o.height=1000;const q=o.getContext('2d');q.fillStyle='#fff';q.fillRect(0,0,800,1000);
+const k=Math.min(680/cw,860/ch);q.imageSmoothingQuality='high';q.drawImage(c,x0,y0,cw,ch,(800-cw*k)/2,(1000-ch*k)/2,cw*k,ch*k);bo=document.createElement('canvas');bo.width=800;bo.height=1000;bo.getContext('2d').drawImage(o,0,0);out=o;
+const av=[r/cnt,g/cnt,b/cnt];let best='',bd=1e9;for(const[n2,v]of Object.entries(COL)){const e=(v[0]-av[0])**2+(v[1]-av[1])**2+(v[2]-av[2])**2;if(e<bd){bd=e;best=n2}}
+if(!cur)$('#eo').value=best}
+let rq=0,strokes=[],sid=0,dn=0,redo=0,bo;['rm','tol','rot'].forEach(k=>$('#'+k).oninput=()=>{strokes=[];render()});$('#r90').onclick=()=>{rq=(rq+1)%4;strokes=[];render()};$('#rz').onclick=()=>{$('#rot').value=0;rq=0;strokes=[];render()};
+const pv=$('#pv'),paint=()=>{if(!bo)return;const q=pv.getContext('2d');q.drawImage(bo,0,0);q.fillStyle='#fff';for(const s of strokes){q.beginPath();q.arc(s[0],s[1],s[2],0,7);q.fill()}},pt=e=>{const r=pv.getBoundingClientRect(),k=800/r.width;strokes.push([(e.clientX-r.left)*k,(e.clientY-r.top)*k,+$('#bs').value,sid]);paint()};
+$('#er').onchange=()=>pv.classList.toggle('er',$('#er').checked);
+pv.onpointerdown=e=>{if($('#er').checked){dn=1;sid++;pv.setPointerCapture(e.pointerId);pt(e)}};pv.onpointermove=e=>{if(dn)pt(e)};pv.onpointerup=pv.onpointercancel=()=>dn=0;
+$('#un').onclick=()=>{if(strokes.length){const l=strokes[strokes.length-1][3];strokes=strokes.filter(s=>s[3]!=l);paint()}};
+$('#ri').onclick=()=>pick(cur.orig,cur);
+function openItem(i){cur=i;src=null;$('#ed').hidden=true;$('#pv').style.display='none';$('#pi').style.display='block';$('#pi').src=urls[i.id];
+$('#nm').value=i.name;$('#ec').value=i.cat;$('#es').value=i.sea;$('#eo').value=i.col;redo=false;$('#dl').hidden=false;$('#ri').hidden=!i.orig;$('#ov').hidden=false}
+$('#cx').onclick=()=>{$('#ov').hidden=true;src=null;rq=0};
+$('#sv').onclick=async()=>{const name=$('#nm').value.trim()||$('#ec').value;
+try{if(cur){const i={...cur,name,cat:$('#ec').value,sea:$('#es').value,col:$('#eo').value};if(redo){i.blob=await new Promise(r=>out.toBlob(r,'image/jpeg',.9));delete urls[i.id]}await tx('readwrite',s=>s.put(i))}
+else{const blob=await new Promise(r=>out.toBlob(r,'image/jpeg',.9)),orig=await new Promise(r=>src.toBlob(r,'image/jpeg',.85));await tx('readwrite',s=>s.put({orig,id:Date.now()+'-'+Math.random().toString(36).slice(2,7),name,cat:$('#ec').value,sea:$('#es').value,col:$('#eo').value,blob,t:Date.now()}))}
+}catch(e){alert('השמירה נכשלה: '+e.message);return}
+$('#ov').hidden=true;src=null;rq=0;load()};
+$('#dl').onclick=async()=>{if(!cur||!confirm('למחוק את הפריט?'))return;await tx('readwrite',s=>s.delete(cur.id));delete urls[cur.id];$('#ov').hidden=true;load()};
+const b64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)}),u2b=u=>{const[h,d]=u.split(','),m=h.match(/:(.*?);/)[1],s=atob(d),a=new Uint8Array(s.length);for(let k=0;k<s.length;k++)a[k]=s.charCodeAt(k);return new Blob([a],{type:m})};
+$('#bk').onclick=async()=>{if(!items.length){alert('אין עדיין פריטים לגיבוי');return}
+const data=JSON.stringify({v:1,items:await Promise.all(items.map(async i=>({...i,blob:await b64(i.blob),orig:i.orig?await b64(i.orig):null})))}),f=new File([data],'closet-backup-'+new Date().toISOString().slice(0,10)+'.json',{type:'application/json'});
+try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e.name=='AbortError')return}
+const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()};
+$('#rs').onclick=()=>$('#f3').click();
+$('#f3').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const j=JSON.parse(await f.text());if(!Array.isArray(j.items))throw 0;
+for(const i of j.items){i.blob=u2b(i.blob);i.orig=typeof i.orig=='string'?u2b(i.orig):undefined;await tx('readwrite',s=>s.put(i))}alert('שוחזרו '+j.items.length+' פריטים');load()}catch(x){alert('קובץ הגיבוי לא תקין')}};
+navigator.storage&&navigator.storage.persist&&navigator.storage.persist();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+load();
+</script></body></html>
