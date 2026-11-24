@@ -15,7 +15,7 @@ input[type=search],input[type=text],select{width:100%;padding:11px 12px;border:1
 #chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .row{display:flex;gap:8px}
 #grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:0 2px}
-.card{background:var(--panel);cursor:pointer}.card img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+.card{background:var(--panel);cursor:pointer}.card img{width:100%;aspect-ratio:3/4;object-fit:contain;background:#EBEAE6;display:block}
 .card div{padding:8px 10px 12px;font-size:14px}.card small{color:var(--mute);display:block}
 #empty{text-align:center;color:var(--mute);padding:60px 30px}
 nav{position:fixed;bottom:0;inset-inline:0;display:flex;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line);z-index:6}
@@ -26,7 +26,7 @@ nav button.alt,.btn.alt{background:none;color:var(--ink)}.btn.del{border-color:#
 label{display:block;margin:12px 0 4px;color:var(--mute);font-size:14px}.ctl{background:var(--panel);padding:10px 12px;border-radius:4px;margin-bottom:8px}
 input[type=range]{width:100%}.btns{display:flex;gap:8px;margin-top:16px;align-items:center}#pv.er{touch-action:none;cursor:crosshair}.mini{padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:none;font-size:13px}[hidden]{display:none!important}
 #tabs{display:flex;padding:0 16px;gap:22px;border-bottom:1px solid var(--line)}#tabs button{background:none;border:0;padding:10px 2px;color:var(--mute);border-bottom:2px solid transparent;font-weight:600}#tabs button.on{color:var(--ink);border-color:var(--ink)}
-.lk{margin:14px 16px;background:var(--panel);padding:12px;border-radius:6px}.lk h3{margin:0 0 8px;font-size:17px}.it{display:flex;gap:4px}.it img{flex:1;min-width:0;width:0;aspect-ratio:4/5;object-fit:cover;background:#fff}
+.lk{margin:14px 16px;background:var(--panel);padding:12px;border-radius:6px}.lk h3{margin:0 0 8px;font-size:17px}.it{display:flex;gap:4px}.it img{flex:1;min-width:0;width:0;aspect-ratio:3/4;object-fit:cover;background:#fff}
 .dots{display:flex;gap:6px;margin:10px 0 0;align-items:center;font-size:13px;color:var(--mute)}.dots i{width:16px;height:16px;border-radius:50%;border:1px solid var(--line);display:inline-block}
 .buy{border-top:1px solid var(--line);margin-top:10px;padding-top:10px;font-size:14px}.st{display:flex;justify-content:space-between;align-items:center;padding:6px 0}.st a{color:var(--ink);font-size:13px;border:1px solid var(--ink);border-radius:4px;padding:4px 10px;text-decoration:none}
 </style></head><body>
@@ -39,11 +39,11 @@ input[type=range]{width:100%}.btns{display:flex;gap:8px;margin-top:16px;align-it
 <nav><button id="b1">+ גלריה</button><button id="b2" class="alt">+ מצלמה</button></nav>
 <input type="file" id="f1" accept="image/*" hidden><input type="file" id="f2" accept="image/*" capture="environment" hidden><input type="file" id="f3" accept=".json,application/json" hidden>
 <section id="ov" class="ov" hidden>
-<canvas id="pv"></canvas><img id="pi" style="display:none;width:100%;max-width:420px;margin:0 auto 14px;background:var(--panel)">
+<canvas id="pv"></canvas><div id="wn" hidden style="color:#c0392b;font-size:14px;margin:0 0 10px;text-align:center"></div><img id="pi" style="display:none;width:100%;max-width:420px;margin:0 auto 14px;background:var(--panel)">
 <div id="ed"><div class="ctl"><label style="margin:0"><input type="checkbox" id="rm" checked> הסרת רקע מקומית</label>
 <label>רגישות הסרה (גבוה = מסיר יותר)</label><input type="range" id="tol" min="10" max="140" value="55">
 <label>יישור (מעלות)</label><input type="range" id="rot" min="-45" max="45" value="0" step="0.5">
-<div class="btns"><button class="btn alt" id="r90">↻ 90°</button><button class="btn alt" id="rz">אפס יישור</button></div><label style="margin-top:14px"><input type="checkbox" id="er"> מחיקה ידנית: גררו באצבע על שאריות רקע</label><div class="btns" style="margin-top:6px"><input type="range" id="bs" min="6" max="60" value="22"><button class="btn alt" id="un">בטל</button></div></div></div>
+<div class="btns"><button class="btn alt" id="r90">↻ 90°</button><button class="btn alt" id="rz">אפס יישור</button><button class="btn alt" id="au">יישור אוטומטי</button></div><label style="margin-top:14px"><input type="checkbox" id="er"> מחיקה ידנית: גררו באצבע על שאריות רקע</label><div class="btns" style="margin-top:6px"><input type="range" id="bs" min="6" max="60" value="22"><button class="btn alt" id="un">בטל</button></div></div></div>
 <label>שם הפריט</label><input type="text" id="nm"><label>קטגוריה</label><select id="ec"></select>
 <label>עונה</label><select id="es"></select><label>צבע עיקרי</label><select id="eo"></select>
 <div class="btns"><button class="btn" id="sv">שמירה</button><button class="btn alt" id="cx">ביטול</button><button class="btn alt" id="ri" hidden>ערוך תמונה</button><button class="btn del" id="dl" hidden>מחיקה</button></div>
@@ -77,32 +77,67 @@ for(let i=0;i<w;i+=Math.max(1,w>>5)){p(i,0);p(i,h-1)}for(let j=0;j<h;j+=Math.max
 bg=[median(R),median(G),median(B)];cur=item||null;redo=!!item;rq=0;strokes=[];$('#er').checked=false;$('#pv').classList.remove('er');$('#rot').value=0;$('#tol').value=55;$('#rm').checked=true;
 if(item){$('#nm').value=item.name;$('#ec').value=item.cat;$('#es').value=item.sea;$('#eo').value=item.col}else{$('#nm').value='';$('#ec').selectedIndex=0;$('#es').selectedIndex=0}$('#ed').hidden=false;$('#pv').style.display='block';$('#pi').style.display='none';$('#dl').hidden=!item;$('#ri').hidden=true;
 $('#ov').hidden=false;render()}
-function render(){if(!src||busy)return;busy=1;requestAnimationFrame(()=>{busy=0;proc()})}
+function render(){if(!src||busy)return;busy=1;$('#pv').style.opacity=.55;requestAnimationFrame(()=>setTimeout(()=>{busy=0;proc();$('#pv').style.opacity=1},0))}
+function cutout(d,W,H,tol){
+const n=W*H,L=new Float32Array(n),A=new Float32Array(n),B=new Float32Array(n),LUT=new Float32Array(256);
+for(let i=0;i<256;i++){const c=i/255;LUT[i]=c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4)}
+const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
+for(let i=0;i<n;i++){const r=LUT[d[i*4]],g=LUT[d[i*4+1]],b=LUT[d[i*4+2]],fx=f((.4124*r+.3576*g+.1805*b)/.95047),fy=f(.2126*r+.7152*g+.0722*b),fz=f((.0193*r+.1192*g+.9505*b)/1.08883);L[i]=116*fy-16;A[i]=500*(fx-fy);B[i]=200*(fy-fz)}
+const dist=(p,c)=>Math.sqrt((L[p]-c[0])**2+(A[p]-c[1])**2+(B[p]-c[2])**2);
+const km=(idx,K)=>{if(idx.length<K)return[{c:[50,0,0],r:12}];const s=[...idx].sort((p,q)=>L[p]-L[q]);let C=[];for(let k=0;k<K;k++){const p=s[Math.floor((k+.5)*s.length/K)];C.push([L[p],A[p],B[p]])}const asg=new Int8Array(idx.length);
+for(let it=0;it<8;it++){const S=C.map(()=>[0,0,0,0]);idx.forEach((p,j)=>{let b=0,bd=1e9;for(let k=0;k<K;k++){const e=dist(p,C[k]);if(e<bd){bd=e;b=k}}asg[j]=b;const t=S[b];t[0]+=L[p];t[1]+=A[p];t[2]+=B[p];t[3]++});C=C.map((c,k)=>S[k][3]?[S[k][0]/S[k][3],S[k][1]/S[k][3],S[k][2]/S[k][3]]:c)}
+const R=C.map(()=>[0,0,0]);idx.forEach((p,j)=>{const k=asg[j],e=dist(p,C[k]),t=R[k];t[0]+=e;t[1]+=e*e;t[2]++});
+const M=C.map((c,k)=>{const t=R[k],m=t[2]?t[0]/t[2]:0,v=t[2]?Math.max(0,t[1]/t[2]-m*m):0;return{c,r:Math.max(7,m+2*Math.sqrt(v)),cnt:t[2]}}).filter(o=>o.cnt>=3);return M.length?M:[{c:C[0],r:12}]};
+const score=(p,M)=>{let b=1e9;for(const o of M){const e=dist(p,o.c)/o.r;if(e<b)b=e}return b};
+const sp=Math.max(1,Math.floor(n/5000)),samp=pred=>{const o=[];for(let p=0,q=0;p<n;p+=sp+((q++)&3))if(pred(p))o.push(p);return o};
+const bw=Math.max(2,Math.round(Math.min(W,H)*.04)),edge=p=>{const x=p%W,y=(p/W)|0;return x<bw||y<bw||x>=W-bw||y>=H-bw},ctr=p=>{const x=p%W,y=(p/W)|0;return x>W*.3&&x<W*.7&&y>H*.3&&y<H*.7};
+const r=Math.max(2,Math.round(Math.min(W,H)*.011));
+const box=(m,r,mode)=>{const t=new Uint16Array(n),o=new Uint8Array(n),w=2*r+1;
+for(let y=0;y<H;y++){let s=0;const o0=y*W;for(let x=-r;x<=r;x++)if(x>=0&&x<W)s+=m[o0+x];for(let x=0;x<W;x++){t[o0+x]=s;const a=x-r,b=x+r+1;if(a>=0)s-=m[o0+a];if(b<W)s+=m[o0+b]}}
+for(let x=0;x<W;x++){let s=0;for(let y=-r;y<=r;y++)if(y>=0&&y<H)s+=t[y*W+x];for(let y=0;y<H;y++){o[y*W+x]=mode?(s>0?1:0):(s==w*w?1:0);const a=y-r,b=y+r+1;if(a>=0)s-=t[a*W+x];if(b<H)s+=t[b*W+x]}}return o};
+const st=new Int32Array(n),comps=m=>{const lb=new Int32Array(n),sz=[0];let id=0;for(let s0=0;s0<n;s0++){if(!m[s0]||lb[s0])continue;id++;let c=0,q=0;st[q++]=s0;lb[s0]=id;
+while(q){const i=st[--q],x=i%W;c++;if(i>=W&&m[i-W]&&!lb[i-W]){lb[i-W]=id;st[q++]=i-W}if(i<n-W&&m[i+W]&&!lb[i+W]){lb[i+W]=id;st[q++]=i+W}if(x>0&&m[i-1]&&!lb[i-1]){lb[i-1]=id;st[q++]=i-1}if(x<W-1&&m[i+1]&&!lb[i+1]){lb[i+1]=id;st[q++]=i+1}}sz.push(c)}return{lb,sz}};
+const clean=m=>{const op=box(box(m,r,0),r,1),{lb,sz}=comps(op),mx=Math.max(0,...sz),keep=new Uint8Array(n);for(let i=0;i<n;i++)if(lb[i]&&sz[lb[i]]>=mx*.03)keep[i]=1;
+const dk=box(keep,r+1,1),o=new Uint8Array(n);for(let i=0;i<n;i++)o[i]=m[i]&&dk[i]?1:0;
+const inv=new Uint8Array(n);for(let i=0;i<n;i++)inv[i]=o[i]?0:1;const c2=comps(inv),bd=new Set();for(let x=0;x<W;x++){bd.add(c2.lb[x]);bd.add(c2.lb[n-W+x])}for(let y=0;y<H;y++){bd.add(c2.lb[y*W]);bd.add(c2.lb[y*W+W-1])}
+for(let i=0;i<n;i++)if(inv[i]&&!bd.has(c2.lb[i]))o[i]=1;return o};
+let bgM=km(samp(edge),4);const cs=samp(ctr),cf=cs.filter(p=>score(p,bgM)>1.2),fgIdx=cf.length>30?cf:cs;const fgf=M=>{const tot=M.reduce((a,o)=>a+(o.cnt||0),0),r=M.filter(o=>o.cnt>=tot*.08);return r.length?r:M};let fgM=fgf(km(fgIdx,4)),m=new Uint8Array(n);const t=55/Math.max(10,tol);
+for(let it=0;it<3;it++){for(let p=0;p<n;p++){const a=score(p,fgM);m[p]=a<2.5&&a<score(p,bgM)*t?1:0}m=clean(m);
+if(it<2){const fi=samp(p=>m[p]);if(fi.length>30)fgM=fgf(km(fi,4))}}
+{const dom=fgM.reduce((a,b)=>(b.cnt||0)>(a.cnt||0)?b:a);let sp2=1e9;for(const b of bgM){const e=Math.sqrt((dom.c[0]-b.c[0])**2+(dom.c[1]-b.c[1])**2+(dom.c[2]-b.c[2])**2);if(e<sp2)sp2=e}cutout.sep=sp2}
+const al=new Uint8Array(n);for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,c=0;for(let dy=-1;dy<=1;dy++){const yy=y+dy;if(yy<0||yy>=H)continue;for(let dx=-1;dx<=1;dx++){const xx=x+dx;if(xx<0||xx>=W)continue;s+=m[yy*W+xx];c++}}const v=s/c;al[y*W+x]=v<=.2?0:v>=.8?255:((v-.2)/.6*255)|0}
+return al}
+
+function estTilt(a0,w,h){let al=Float32Array.from(a0);for(let p=0;p<3;p++){const t=new Float32Array(w*h),o=new Float32Array(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let s=0,c=0;for(let k=-2;k<=2;k++){const X=x+k;if(X>=0&&X<w){s+=al[y*w+X];c++}}t[y*w+x]=s/c}for(let y=0;y<h;y++)for(let x=0;x<w;x++){let s=0,c=0;for(let k=-2;k<=2;k++){const Y=y+k;if(Y>=0&&Y<h){s+=t[Y*w+x];c++}}o[y*w+x]=s/c}al=o}
+const B=new Float32Array(91);let tot=0;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,gx=(al[i+1]-al[i-1])*2+al[i-w+1]-al[i-w-1]+al[i+w+1]-al[i+w-1],gy=(al[i+w]-al[i-w])*2+al[i+w-1]-al[i-w-1]+al[i+w+1]-al[i-w+1],m=Math.hypot(gx,gy);if(m<40)continue;let f=((Math.atan2(gy,gx)*180/Math.PI)%90+90)%90;if(f>45)f-=90;B[Math.round(f)+45]+=m;tot+=m}
+if(!tot)return 0;let best=0,bv=0;for(let k=-25;k<=25;k++){let v=0;for(let j=-2;j<=2;j++)v+=B[k+j+45];if(v>bv){bv=v;best=k}}
+let v0=0;for(let j=-2;j<=2;j++)v0+=B[j+45];return Math.abs(best)>=2&&bv>tot*5/90*2.4&&bv>v0*1.4?-best:0}
+let tiltEst=0;
 function proc(){const a=+$('#rot').value*Math.PI/180+rq*Math.PI/2,w=src.width,h=src.height,s=Math.abs(Math.sin(a)),co=Math.abs(Math.cos(a)),
 W=Math.ceil(w*co+h*s),H=Math.ceil(w*s+h*co),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});
 x.fillStyle=`rgb(${bg})`;x.fillRect(0,0,W,H);x.translate(W/2,H/2);x.rotate(a);x.drawImage(src,-w/2,-h/2);
-const id=x.getImageData(0,0,W,H),d=id.data,n=W*H,m=new Uint8Array(n);let x0=0,y0=0,x1=W-1,y1=H-1,r=0,g=0,b=0,cnt=0;
-if($('#rm').checked){const t=$('#tol').value**2,st=new Int32Array(n);let sp=0;
-const nr=i=>{const q=i*4,u=d[q]-bg[0],v=d[q+1]-bg[1],z=d[q+2]-bg[2];return u*u+v*v+z*z<t},add=i=>{if(!m[i]&&nr(i)){m[i]=1;st[sp++]=i}};
-for(let i=0;i<W;i++){add(i);add(n-W+i)}for(let j=0;j<H;j++){add(j*W);add(j*W+W-1)}
-while(sp){const i=st[--sp],cx=i%W;if(i>=W)add(i-W);if(i<n-W)add(i+W);if(cx>0)add(i-1);if(cx<W-1)add(i+1)}
-{const lb=new Int32Array(n),sz=[0];let id=0,mx=0;
-for(let s0=0;s0<n;s0++){if(m[s0]||lb[s0])continue;id++;let c=0,p=0;st[p++]=s0;lb[s0]=id;
-while(p){const i=st[--p],cx=i%W;c++;if(i>=W&&!m[i-W]&&!lb[i-W]){lb[i-W]=id;st[p++]=i-W}if(i<n-W&&!m[i+W]&&!lb[i+W]){lb[i+W]=id;st[p++]=i+W}if(cx>0&&!m[i-1]&&!lb[i-1]){lb[i-1]=id;st[p++]=i-1}if(cx<W-1&&!m[i+1]&&!lb[i+1]){lb[i+1]=id;st[p++]=i+1}}
-sz[id]=c;if(c>mx)mx=c}
-for(let i=0;i<n;i++)if(!m[i]&&sz[lb[i]]<mx*.02)m[i]=1}
-x0=W;y0=H;x1=0;y1=0;for(let i=0;i<n;i++){const q=i*4;if(m[i]){d[q+3]=0}else{const X=i%W,Y=(i/W)|0;
-if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;
-if(X>0&&m[i-1]||X<W-1&&m[i+1]||i>=W&&m[i-W]||i<n-W&&m[i+W])d[q+3]=150;else{r+=d[q];g+=d[q+1];b+=d[q+2];cnt++}}}
-if(x1<=x0||y1<=y0||cnt<50){x0=0;y0=0;x1=W-1;y1=H-1;m.fill(0);}
+segOK=true;segWarn=false;segLow=false;const id=x.getImageData(0,0,W,H),d=id.data,n=W*H;let x0=0,y0=0,x1=W-1,y1=H-1,r=0,g=0,b=0,cnt=0;
+if($('#rm').checked){const kk=Math.min(1,480/Math.max(W,H)),sw=Math.round(W*kk),sh=Math.round(H*kk),sc=document.createElement('canvas');sc.width=sw;sc.height=sh;const sx=sc.getContext('2d',{willReadFrequently:true});sx.drawImage(c,0,0,sw,sh);
+const al=cutout(sx.getImageData(0,0,sw,sh).data,sw,sh,+$('#tol').value);tiltEst=estTilt(al,sw,sh);const ai=sx.createImageData(sw,sh);for(let i=0;i<sw*sh;i++)ai.data[i*4+3]=al[i];sx.clearRect(0,0,sw,sh);sx.putImageData(ai,0,0);
+const ac=document.createElement('canvas');ac.width=W;ac.height=H;const ax=ac.getContext('2d',{willReadFrequently:true});ax.imageSmoothingEnabled=true;ax.drawImage(sc,0,0,W,H);const U=ax.getImageData(0,0,W,H).data;
+x0=W;y0=H;x1=0;y1=0;let kept=0,bt=0;for(let i=0;i<n;i++){const q=i*4,v=Math.max(0,Math.min(255,(U[q+3]-100)*255/60));d[q+3]=v;if(v>127){kept++;const X=i%W,Y=(i/W)|0;if(X==0||Y==0||X==W-1||Y==H-1)bt++;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;if(v>=250){r+=d[q];g+=d[q+1];b+=d[q+2];cnt++}}}
+segOK=kept/n>.02&&kept/n<.92&&x1>x0&&y1>y0&&cnt>=50;segWarn=bt/(2*(W+H))>.04||cutout.sep<14;segLow=cutout.sep<14;if(x1<=x0||y1<=y0||cnt<50){x0=0;y0=0;x1=W-1;y1=H-1;cnt=0;for(let i=0;i<n;i++)d[i*4+3]=255}
 x.putImageData(id,0,0)}
 if(!cnt){for(let i=0;i<n;i+=7){r+=d[i*4];g+=d[i*4+1];b+=d[i*4+2];cnt++}}
-const cw=x1-x0+1,ch=y1-y0+1,o=$('#pv');o.width=800;o.height=1000;const q=o.getContext('2d');q.fillStyle='#fff';q.fillRect(0,0,800,1000);
-const k=Math.min(680/cw,860/ch);q.imageSmoothingQuality='high';q.drawImage(c,x0,y0,cw,ch,(800-cw*k)/2,(1000-ch*k)/2,cw*k,ch*k);bo=document.createElement('canvas');bo.width=800;bo.height=1000;bo.getContext('2d').drawImage(o,0,0);out=o;
-const av=[r/cnt,g/cnt,b/cnt];let best='',bd=1e9;for(const[n2,v]of Object.entries(COL)){const e=(v[0]-av[0])**2+(v[1]-av[1])**2+(v[2]-av[2])**2;if(e<bd){bd=e;best=n2}}
+segMsg=!segOK?'לא הצלחתי לבודד את הפריט בבירור.':segLow?'הפריט דומה מדי לצבע הרקע, והבידוד עלול להיות לא מדויק.':segWarn?'הפריט נוגע בקצה התמונה, ייתכן שחלק ממנו חתוך או שנשארו שאריות.':'';
+$('#wn').textContent=segMsg?segMsg+' נסו לשנות את סליידר הרגישות, ליישר, למחוק ידנית או לצלם שוב.':'';$('#wn').hidden=!segMsg;
+cache={c,x0,y0,cw:x1-x0+1,ch:y1-y0+1,av:[r/cnt,g/cnt,b/cnt]};strokes=[];draw()}
+const FR={'מכנסיים ארוכים':{w:.5,h:.74,y:.5},'ג׳ינס':{w:.5,h:.74,y:.5},'מכנסיים קצרים':{w:.66,h:.5,y:.5},'נעליים':{w:.74,h:.34,y:.52},'ג׳קט':{w:.82,h:.7,y:.5},'מעיל':{w:.82,h:.72,y:.5},'בגדי ספורט':{w:.7,h:.6,y:.5},'אביזרים':{w:.5,h:.38,y:.5}},FRAME=c=>FR[c]||{w:.8,h:.64,y:.5};
+function sharpen(im){const d=im.data,w=im.width,h=im.height,s=new Uint8ClampedArray(d),A=.35;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4;if(s[i+3]<255||s[i-1]<255||s[i+7]<255||s[i-w*4+3]<255||s[i+w*4+3]<255)continue;for(let c=0;c<3;c++)d[i+c]=s[i+c]*(1+4*A)-A*(s[i-4+c]+s[i+4+c]+s[i-w*4+c]+s[i+w*4+c])}}
+function draw(){if(!cache)return;const{c,x0,y0,cw,ch,av}=cache,F=FRAME($('#ec').value),o=$('#pv');o.width=800;o.height=1067;const q=o.getContext('2d');q.fillStyle='#EBEAE6';q.fillRect(0,0,800,1067);
+const k=Math.min(F.w*800/cw,F.h*1067/ch),dw=Math.max(1,Math.round(cw*k)),dh=Math.max(1,Math.round(ch*k)),t=document.createElement('canvas');t.width=dw;t.height=dh;const tx=t.getContext('2d',{willReadFrequently:true});tx.imageSmoothingQuality='high';tx.drawImage(c,x0,y0,cw,ch,0,0,dw,dh);
+const im=tx.getImageData(0,0,dw,dh);sharpen(im);tx.putImageData(im,0,0);q.save();q.shadowColor='rgba(50,45,35,.22)';q.shadowBlur=26;q.shadowOffsetY=12;q.drawImage(t,Math.round((800-dw)/2),Math.round(1067*F.y-dh/2));q.restore();
+bo=document.createElement('canvas');bo.width=800;bo.height=1067;bo.getContext('2d').drawImage(o,0,0);out=o;
+let best='',bd=1e9;for(const[n2,v]of Object.entries(COL)){const e=(v[0]-av[0])**2+(v[1]-av[1])**2+(v[2]-av[2])**2;if(e<bd){bd=e;best=n2}}
 if(!cur)$('#eo').value=best}
-let rq=0,strokes=[],sid=0,dn=0,redo=0,bo;['rm','tol','rot'].forEach(k=>$('#'+k).oninput=()=>{strokes=[];render()});$('#r90').onclick=()=>{rq=(rq+1)%4;strokes=[];render()};$('#rz').onclick=()=>{$('#rot').value=0;rq=0;strokes=[];render()};
-const pv=$('#pv'),paint=()=>{if(!bo)return;const q=pv.getContext('2d');q.drawImage(bo,0,0);q.fillStyle='#fff';for(const s of strokes){q.beginPath();q.arc(s[0],s[1],s[2],0,7);q.fill()}},pt=e=>{const r=pv.getBoundingClientRect(),k=800/r.width;strokes.push([(e.clientX-r.left)*k,(e.clientY-r.top)*k,+$('#bs').value,sid]);paint()};
+
+let rq=0,strokes=[],sid=0,dn=0,redo=0,bo,segOK=true,segWarn=false,segLow=false,segMsg='',cache=null;['rm','tol','rot'].forEach(k=>$('#'+k)[k=='rm'?'oninput':'onchange']=()=>{strokes=[];render()});$('#r90').onclick=()=>{rq=(rq+1)%4;strokes=[];render()};$('#rz').onclick=()=>{$('#rot').value=0;rq=0;strokes=[];render()};
+const pv=$('#pv'),paint=()=>{if(!bo)return;const q=pv.getContext('2d');q.drawImage(bo,0,0);q.fillStyle='#EBEAE6';for(const s of strokes){q.beginPath();q.arc(s[0],s[1],s[2],0,7);q.fill()}},pt=e=>{const r=pv.getBoundingClientRect(),k=800/r.width;strokes.push([(e.clientX-r.left)*k,(e.clientY-r.top)*k,+$('#bs').value,sid]);paint()};
 $('#er').onchange=()=>pv.classList.toggle('er',$('#er').checked);
 pv.onpointerdown=e=>{if($('#er').checked){dn=1;sid++;pv.setPointerCapture(e.pointerId);pt(e)}};pv.onpointermove=e=>{if(dn)pt(e)};pv.onpointerup=pv.onpointercancel=()=>dn=0;
 $('#un').onclick=()=>{if(strokes.length){const l=strokes[strokes.length-1][3];strokes=strokes.filter(s=>s[3]!=l);paint()}};
@@ -110,7 +145,7 @@ $('#ri').onclick=()=>pick(cur.orig,cur);
 function openItem(i){cur=i;src=null;$('#ed').hidden=true;$('#pv').style.display='none';$('#pi').style.display='block';$('#pi').src=urls[i.id];
 $('#nm').value=i.name;$('#ec').value=i.cat;$('#es').value=i.sea;$('#eo').value=i.col;redo=false;$('#dl').hidden=false;$('#ri').hidden=!i.orig;$('#ov').hidden=false}
 $('#cx').onclick=()=>{$('#ov').hidden=true;src=null;rq=0};
-$('#sv').onclick=async()=>{const name=$('#nm').value.trim()||$('#ec').value;
+$('#sv').onclick=async()=>{const name=$('#nm').value.trim()||$('#ec').value;if(!cur||redo){if(!segOK){alert((segMsg||'לא הצלחתי לבודד את הפריט.')+' לא שמרתי. נסו רקע אחיד יותר, שנו את הסליידר או כבו את \"הסרת רקע מקומית\".');return}if(segWarn&&!confirm(segMsg+'\nלשמור בכל זאת? ביטול יחזיר אותך לעריכה.'))return}
 try{if(cur){const i={...cur,name,cat:$('#ec').value,sea:$('#es').value,col:$('#eo').value};if(redo){i.blob=await new Promise(r=>out.toBlob(r,'image/jpeg',.9));delete urls[i.id]}await tx('readwrite',s=>s.put(i))}
 else{const blob=await new Promise(r=>out.toBlob(r,'image/jpeg',.9)),orig=await new Promise(r=>src.toBlob(r,'image/jpeg',.85));await tx('readwrite',s=>s.put({orig,id:Date.now()+'-'+Math.random().toString(36).slice(2,7),name,cat:$('#ec').value,sea:$('#es').value,col:$('#eo').value,blob,t:Date.now()}))}
 }catch(e){alert('השמירה נכשלה: '+e.message);return}
@@ -146,6 +181,8 @@ const d=document.createElement('div');d.className='lk';
 d.innerHTML=`<h3>${p.n}</h3><div class="it">${[best[3],best[0],best[1],best[2]].filter(Boolean).map(i=>`<img src="${u(i)}" alt="">`).join('')}</div><div class="dots">${[...new Set(cs)].map(c=>`<i style="background:rgb(${COL[c]})"></i>`).join('')}<span>${pal}</span></div><div class="buy"><b>${why}:</b> ${cat} בצבע ${cn}${(PR[cat]||[]).map(([s,a,b])=>`<div class="st"><span>${s} · ₪${a}–${b}</span><a target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(cat+' '+cn+' '+s)}">חפש ↗</a></div>`).join('')}<small style="color:var(--mute)">טווחי מחיר משוערים. המחיר בפועל מופיע באתר החנות.</small></div>`;L.append(d)});
 if(!made)L.innerHTML='<div style="text-align:center;color:var(--mute);padding:50px 30px">אין עדיין מספיק פריטים שמתאימים ללוק. הוסיפו חולצה, מכנסיים ונעליים.</div>'}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x==b));const l=view=='l';$('#bar').hidden=l;$('#grid').hidden=l;$('#empty').hidden=l||items.length>0;$('#looks').hidden=!l;document.querySelector('nav').hidden=l;if(l)looks()});
+$('#au').onclick=()=>{if(!tiltEst){alert('לא זוהה צורך ביישור אוטומטי. אפשר ליישר ידנית עם הסליידר.');return}const v=Math.max(-45,Math.min(45,+$('#rot').value+tiltEst));$('#rot').value=v;strokes=[];render()};
+$('#ec').onchange=()=>{if(src&&cache){strokes=[];draw()}};
 $('#ln').onclick=()=>{seed++;looks()};
 /*END*/
 navigator.storage&&navigator.storage.persist&&navigator.storage.persist();
